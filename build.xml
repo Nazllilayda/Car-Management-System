@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="CarManagementSystem" default="default" basedir=".">
+    <description>Builds, tests, and runs the project CarManagementSystem.</description>
+    <property file="nbproject/project.properties"/>
+    <import file="nbproject/build-impl.xml"/>
+</project>

@@ -1,0 +1,8 @@
+BranchManager|EMP01|Lena Brooks|BR01
+RentalAgent|EMP02|David Cole|BR01
+Mechanic|EMP03|Mia Patel|BR01
+RentalAgent|EMP04|Noah Reed|BR02
+Mechanic|EMP05|Ava Turner|BR02
+BranchManager|EMP06|Sophia Bennett|BR03
+RentalAgent|EMP07|Ethan Walker|BR03
+Mechanic|EMP08|Chloe Rivera|BR03

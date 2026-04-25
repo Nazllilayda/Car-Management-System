@@ -1,0 +1,23 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Compile CarManagementSystem",
+      "type": "shell",
+      "command": "mkdir -p out && javac -d out src/carmanagement/*.java",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": [
+        "$javac"
+      ]
+    },
+    {
+      "label": "Run CarManagementSystem",
+      "type": "shell",
+      "command": "java -cp out carmanagement.Main",
+      "dependsOn": "Compile CarManagementSystem"
+    }
+  ]
+}

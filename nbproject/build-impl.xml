@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="CarManagementSystem-impl" default="default" basedir="..">
+    <property file="nbproject/project.properties"/>
+    <target name="default">
+        <mkdir dir="${build.classes.dir}"/>
+        <javac srcdir="${src.dir}" destdir="${build.classes.dir}" includeantruntime="false"
+               source="${javac.source}" target="${javac.target}" encoding="${source.encoding}"/>
+        <java classname="${main.class}" fork="true">
+            <classpath>
+                <pathelement path="${build.classes.dir}"/>
+            </classpath>
+        </java>
+    </target>
+</project>
