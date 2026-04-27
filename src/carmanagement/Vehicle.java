@@ -9,15 +9,17 @@ public abstract class Vehicle {
     private final String plateNumber;
     private final String brand;
     private final String model;
+    private final String color;
     private final int year;
     private final String branchId;
     private VehicleStatus status;
 
-    protected Vehicle(String vehicleId, String plateNumber, String brand, String model, int year, String branchId) {
+    protected Vehicle(String vehicleId, String plateNumber, String brand, String model, String color, int year, String branchId) {
         this.vehicleId = vehicleId;
         this.plateNumber = plateNumber;
         this.brand = brand;
         this.model = model;
+        this.color = color;
         this.year = year;
         this.branchId = branchId;
         this.status = VehicleStatus.AVAILABLE;
@@ -37,6 +39,10 @@ public abstract class Vehicle {
 
     public String getModel() {
         return model;
+    }
+
+    public String getColor() {
+        return color;
     }
 
     public int getYear() {
@@ -74,6 +80,7 @@ public abstract class Vehicle {
                 plateNumber,
                 brand,
                 model,
+                color,
                 String.valueOf(year),
                 branchId,
                 status.name());
@@ -82,7 +89,7 @@ public abstract class Vehicle {
     @Override
     public String toString() {
         return vehicleId + " - " + getVehicleType() + " - " + brand + " " + model
-                + " (" + year + "), Plate: " + plateNumber
+                + " (" + color + ", " + year + "), Plate: " + plateNumber
                 + ", Branch: " + branchId + ", Status: " + status;
     }
 }

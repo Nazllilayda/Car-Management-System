@@ -303,22 +303,23 @@ public class AgencyService {
         customers.putIfAbsent("CUS03", new Customer("CUS03", "Olivia Stone", "555-1003", "LIC1003", 120));
         customers.putIfAbsent("CUS04", new Customer("CUS04", "Daniel Kim", "555-1004", "LIC1004", 30));
 
-        vehicles.putIfAbsent("VH01", new EconomyVehicle("VH01", "34ECO101", "Toyota", "Yaris", 2023, "BR01"));
-        vehicles.putIfAbsent("VH02", new SUVVehicle("VH02", "34SUV202", "Nissan", "X-Trail", 2022, "BR01"));
-        vehicles.putIfAbsent("VH03", new LuxuryVehicle("VH03", "06LUX303", "BMW", "5 Series", 2024, "BR02"));
-        vehicles.putIfAbsent("VH04", new VanVehicle("VH04", "06VAN404", "Ford", "Transit", 2021, "BR02"));
-        vehicles.putIfAbsent("VH05", new EconomyVehicle("VH05", "34ECO505", "Honda", "City", 2024, "BR01"));
-        vehicles.putIfAbsent("VH06", new EconomyVehicle("VH06", "35ECO606", "Hyundai", "i20", 2023, "BR03"));
-        vehicles.putIfAbsent("VH07", new EconomyVehicle("VH07", "06ECO707", "Renault", "Clio", 2022, "BR02"));
-        vehicles.putIfAbsent("VH08", new SUVVehicle("VH08", "35SUV808", "Kia", "Sportage", 2024, "BR03"));
-        vehicles.putIfAbsent("VH09", new SUVVehicle("VH09", "34SUV909", "Peugeot", "3008", 2023, "BR01"));
-        vehicles.putIfAbsent("VH10", new SUVVehicle("VH10", "06SUV110", "Volkswagen", "Tiguan", 2022, "BR02"));
-        vehicles.putIfAbsent("VH11", new LuxuryVehicle("VH11", "35LUX211", "Mercedes-Benz", "E-Class", 2024, "BR03"));
-        vehicles.putIfAbsent("VH12", new LuxuryVehicle("VH12", "34LUX312", "Audi", "A6", 2023, "BR01"));
-        vehicles.putIfAbsent("VH13", new LuxuryVehicle("VH13", "06LUX413", "Volvo", "S90", 2024, "BR02"));
-        vehicles.putIfAbsent("VH14", new VanVehicle("VH14", "35VAN514", "Mercedes-Benz", "Vito", 2022, "BR03"));
-        vehicles.putIfAbsent("VH15", new VanVehicle("VH15", "34VAN615", "Volkswagen", "Caravelle", 2023, "BR01"));
-        vehicles.putIfAbsent("VH16", new VanVehicle("VH16", "06VAN716", "Peugeot", "Traveller", 2024, "BR02"));
+        vehicles.putIfAbsent("VH01", new EconomyVehicle("VH01", "34ECO101", "Toyota", "Yaris", "White", 2023, "BR01"));
+        vehicles.putIfAbsent("VH02", new SUVVehicle("VH02", "34SUV202", "Nissan", "X-Trail", "Black", 2022, "BR01"));
+        vehicles.putIfAbsent("VH03", new LuxuryVehicle("VH03", "06LUX303", "BMW", "5 Series", "Midnight Blue", 2024, "BR02"));
+        vehicles.putIfAbsent("VH04", new VanVehicle("VH04", "06VAN404", "Ford", "Transit", "Silver", 2021, "BR02"));
+        vehicles.putIfAbsent("VH05", new EconomyVehicle("VH05", "34ECO505", "Honda", "City", "Red", 2024, "BR01"));
+        vehicles.putIfAbsent("VH06", new EconomyVehicle("VH06", "35ECO606", "Hyundai", "i20", "Gray", 2023, "BR03"));
+        vehicles.putIfAbsent("VH07", new EconomyVehicle("VH07", "06ECO707", "Renault", "Clio", "Blue", 2022, "BR02"));
+        vehicles.putIfAbsent("VH08", new SUVVehicle("VH08", "35SUV808", "Kia", "Sportage", "Pearl White", 2024, "BR03"));
+        vehicles.putIfAbsent("VH09", new SUVVehicle("VH09", "34SUV909", "Peugeot", "3008", "Graphite", 2023, "BR01"));
+        vehicles.putIfAbsent("VH10", new SUVVehicle("VH10", "06SUV110", "Volkswagen", "Tiguan", "Silver", 2022, "BR02"));
+        vehicles.putIfAbsent("VH11", new LuxuryVehicle("VH11", "35LUX211", "Mercedes-Benz", "E-Class", "Obsidian Black", 2024, "BR03"));
+        vehicles.putIfAbsent("VH12", new LuxuryVehicle("VH12", "34LUX312", "Audi", "A6", "Glacier White", 2023, "BR01"));
+        vehicles.putIfAbsent("VH13", new LuxuryVehicle("VH13", "06LUX413", "Volvo", "S90", "Champagne", 2024, "BR02"));
+        vehicles.putIfAbsent("VH14", new VanVehicle("VH14", "35VAN514", "Mercedes-Benz", "Vito", "Navy", 2022, "BR03"));
+        vehicles.putIfAbsent("VH15", new VanVehicle("VH15", "34VAN615", "Volkswagen", "Caravelle", "White", 2023, "BR01"));
+        vehicles.putIfAbsent("VH16", new VanVehicle("VH16", "06VAN716", "Peugeot", "Traveller", "Bronze", 2024, "BR02"));
+        vehicles.putIfAbsent("VH17", new EconomyVehicle("VH17", "34MIC117", "Nissan", "Micra 1.0 Vision", "Green", 2024, "BR01"));
     }
 
     private void loadBranches() throws IOException {
@@ -361,13 +362,16 @@ public class AgencyService {
     private void loadVehicles() throws IOException {
         for (String line : storageService.readRecords("vehicles.txt")) {
             String[] parts = line.split("\\|");
-            if (parts.length != 8) {
+            if (parts.length != 8 && parts.length != 9) {
                 continue;
             }
-            Vehicle vehicle = createVehicle(parts[0], parts[1], parts[2], parts[3], parts[4],
-                    Integer.parseInt(parts[5]), parts[6]);
+            String color = parts.length == 9 ? parts[5] : "Unspecified";
+            int year = Integer.parseInt(parts.length == 9 ? parts[6] : parts[5]);
+            String branchId = parts.length == 9 ? parts[7] : parts[6];
+            String status = parts.length == 9 ? parts[8] : parts[7];
+            Vehicle vehicle = createVehicle(parts[0], parts[1], parts[2], parts[3], parts[4], color, year, branchId);
             if (vehicle != null) {
-                vehicle.setStatus(VehicleStatus.valueOf(parts[7]));
+                vehicle.setStatus(VehicleStatus.valueOf(status));
                 vehicles.put(vehicle.getVehicleId(), vehicle);
             }
         }
@@ -425,12 +429,12 @@ public class AgencyService {
     }
 
     private Vehicle createVehicle(String vehicleType, String vehicleId, String plateNumber, String brand, String model,
-            int year, String branchId) {
+            String color, int year, String branchId) {
         return switch (vehicleType) {
-            case "Economy" -> new EconomyVehicle(vehicleId, plateNumber, brand, model, year, branchId);
-            case "SUV" -> new SUVVehicle(vehicleId, plateNumber, brand, model, year, branchId);
-            case "Luxury" -> new LuxuryVehicle(vehicleId, plateNumber, brand, model, year, branchId);
-            case "Van" -> new VanVehicle(vehicleId, plateNumber, brand, model, year, branchId);
+            case "Economy" -> new EconomyVehicle(vehicleId, plateNumber, brand, model, color, year, branchId);
+            case "SUV" -> new SUVVehicle(vehicleId, plateNumber, brand, model, color, year, branchId);
+            case "Luxury" -> new LuxuryVehicle(vehicleId, plateNumber, brand, model, color, year, branchId);
+            case "Van" -> new VanVehicle(vehicleId, plateNumber, brand, model, color, year, branchId);
             default -> null;
         };
     }

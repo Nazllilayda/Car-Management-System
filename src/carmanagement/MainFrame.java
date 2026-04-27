@@ -85,7 +85,7 @@ public class MainFrame extends JFrame {
     private final JTextField maintenanceDateField = new JTextField(LocalDate.now().plusDays(7).toString());
     private final JTextField maintenanceDescriptionField = new JTextField("Routine inspection");
 
-    private final DefaultTableModel vehicleTableModel = createTableModel("ID", "Type", "Brand", "Model", "Year", "Branch", "Status", "Daily Rate");
+    private final DefaultTableModel vehicleTableModel = createTableModel("ID", "Type", "Brand", "Model", "Color", "Year", "Branch", "Status", "Daily Rate");
     private final DefaultTableModel customerTableModel = createTableModel("Customer ID", "Full Name", "Phone", "License", "Tier", "Points", "Discount");
     private final DefaultTableModel reservationTableModel = createTableModel("Reservation", "Customer", "Vehicle", "Pickup", "Return", "Start", "End", "Status");
     private final DefaultTableModel invoiceTableModel = createTableModel("Invoice", "Reservation", "Base", "Discount", "Damage", "Mileage", "Total");
@@ -706,6 +706,7 @@ Maintenance Demo Angle
                 vehicle.getVehicleType(),
                 vehicle.getBrand(),
                 vehicle.getModel(),
+                vehicle.getColor(),
                 vehicle.getYear(),
                 vehicle.getBranchId(),
                 vehicle.getStatus(),
@@ -852,6 +853,7 @@ Presentation Angle
         for (Vehicle vehicle : agencyService.getVehicles()) {
             String label = vehicle.getVehicleId() + " - " + vehicle.getVehicleType()
                     + " - " + vehicle.getBrand() + " " + vehicle.getModel()
+                    + " - " + vehicle.getColor()
                     + " - " + vehicle.getStatus();
             reservationVehicleBox.addItem(label);
             maintenanceVehicleBox.addItem(label);

@@ -1,8 +1,8 @@
 package carmanagement;
 
 public class LuxuryVehicle extends Vehicle {
-    public LuxuryVehicle(String vehicleId, String plateNumber, String brand, String model, int year, String branchId) {
-        super(vehicleId, plateNumber, brand, model, year, branchId);
+    public LuxuryVehicle(String vehicleId, String plateNumber, String brand, String model, String color, int year, String branchId) {
+        super(vehicleId, plateNumber, brand, model, color, year, branchId);
     }
 
     @Override
