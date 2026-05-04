@@ -11,8 +11,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class AgencyService {
-    public static final String COMPANY_NAME = "Velocity Harbor Solutions";
-    public static final String PRODUCT_NAME = "FleetOrbit Rental Suite";
+    public static final String COMPANY_NAME = "KFISB";
+    public static final String PRODUCT_NAME = "KFISB DriveLounge";
 
     private final TextStorageService storageService;
     private final Map<String, Branch> branches = new LinkedHashMap<>();
@@ -320,6 +320,7 @@ public class AgencyService {
         vehicles.putIfAbsent("VH15", new VanVehicle("VH15", "34VAN615", "Volkswagen", "Caravelle", "White", 2023, "BR01"));
         vehicles.putIfAbsent("VH16", new VanVehicle("VH16", "06VAN716", "Peugeot", "Traveller", "Bronze", 2024, "BR02"));
         vehicles.putIfAbsent("VH17", new EconomyVehicle("VH17", "34MIC117", "Nissan", "Micra 1.0 Vision", "Green", 2024, "BR01"));
+        vehicles.putIfAbsent("VH18", new SUVVehicle("VH18", "35CUP418", "Cupra", "Formentor", "Black", 2024, "BR03"));
     }
 
     private void loadBranches() throws IOException {

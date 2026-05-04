@@ -5,7 +5,13 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.GradientPaint;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.GridLayout;
+import java.awt.RenderingHints;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.List;
@@ -28,21 +34,24 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.UIManager;
 import javax.swing.border.Border;
+import javax.swing.table.TableRowSorter;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 
 public class MainFrame extends JFrame {
-    private static final Color PAGE_BACKGROUND = new Color(241, 244, 249);
+    private static final Color PAGE_BACKGROUND = new Color(252, 245, 248);
     private static final Color PANEL_BACKGROUND = Color.WHITE;
-    private static final Color BRAND_DARK = new Color(18, 38, 63);
-    private static final Color BRAND_MID = new Color(28, 71, 122);
-    private static final Color ACCENT_GOLD = new Color(217, 164, 65);
-    private static final Color SOFT_BLUE = new Color(231, 240, 255);
-    private static final Color SOFT_GREEN = new Color(227, 245, 233);
-    private static final Color SOFT_ORANGE = new Color(255, 241, 224);
-    private static final Color SOFT_LAVENDER = new Color(242, 232, 250);
-    private static final Color TEXT_PRIMARY = new Color(32, 43, 57);
-    private static final Color TEXT_MUTED = new Color(96, 108, 122);
+    private static final Color BRAND_DARK = new Color(122, 50, 94);
+    private static final Color BRAND_MID = new Color(198, 83, 133);
+    private static final Color BRAND_RED = new Color(214, 72, 93);
+    private static final Color ACCENT_GOLD = new Color(242, 203, 126);
+    private static final Color SOFT_BLUE = new Color(251, 233, 242);
+    private static final Color SOFT_GREEN = new Color(248, 235, 241);
+    private static final Color SOFT_ORANGE = new Color(255, 234, 236);
+    private static final Color SOFT_LAVENDER = new Color(247, 231, 240);
+    private static final Color TEXT_PRIMARY = new Color(88, 40, 69);
+    private static final Color TEXT_MUTED = new Color(143, 102, 126);
 
     private final AgencyService agencyService = new AgencyService(Paths.get("data"));
 
@@ -52,6 +61,7 @@ public class MainFrame extends JFrame {
     private final JLabel invoiceCountLabel = createMetricValueLabel();
     private final JLabel statusLabel = new JLabel("Ready");
     private final JLabel heroInsightLabel = new JLabel("Live rental operations overview");
+    private final JLabel latestReservationLabel = new JLabel("Latest reservation ID: none yet");
 
     private final JTextArea dashboardArea = createNarrativeArea();
     private final JTextArea activityGuideArea = createNarrativeArea();
@@ -84,10 +94,12 @@ public class MainFrame extends JFrame {
     private final JComboBox<String> mechanicBox = new JComboBox<>();
     private final JTextField maintenanceDateField = new JTextField(LocalDate.now().plusDays(7).toString());
     private final JTextField maintenanceDescriptionField = new JTextField("Routine inspection");
+    private final JTabbedPane mainTabs = new JTabbedPane();
 
     private final DefaultTableModel vehicleTableModel = createTableModel("ID", "Type", "Brand", "Model", "Color", "Year", "Branch", "Status", "Daily Rate");
     private final DefaultTableModel customerTableModel = createTableModel("Customer ID", "Full Name", "Phone", "License", "Tier", "Points", "Discount");
     private final DefaultTableModel reservationTableModel = createTableModel("Reservation", "Customer", "Vehicle", "Pickup", "Return", "Start", "End", "Status");
+    private final DefaultTableModel reservationLookupTableModel = createTableModel("Reservation ID", "Customer", "Vehicle", "Status");
     private final DefaultTableModel invoiceTableModel = createTableModel("Invoice", "Reservation", "Base", "Discount", "Damage", "Mileage", "Total");
     private final DefaultTableModel damageTableModel = createTableModel("Damage ID", "Reservation", "Notes", "Fee");
     private final DefaultTableModel employeeTableModel = createTableModel("Employee ID", "Name", "Role", "Branch", "Details");
@@ -96,6 +108,7 @@ public class MainFrame extends JFrame {
     private final JTable vehicleTable = createTable(vehicleTableModel);
     private final JTable customerTable = createTable(customerTableModel);
     private final JTable reservationTable = createTable(reservationTableModel);
+    private final JTable reservationLookupTable = createTable(reservationLookupTableModel);
     private final JTable invoiceTable = createTable(invoiceTableModel);
     private final JTable damageTable = createTable(damageTableModel);
     private final JTable employeeTable = createTable(employeeTableModel);
@@ -122,6 +135,7 @@ public class MainFrame extends JFrame {
         add(buildTabbedPane(), BorderLayout.CENTER);
         add(buildFooterPanel(), BorderLayout.SOUTH);
 
+        wireReservationLookupTable();
         refreshAllViews();
     }
 
@@ -140,7 +154,7 @@ public class MainFrame extends JFrame {
         JPanel heroCard = new JPanel(new BorderLayout(16, 16));
         heroCard.setBackground(BRAND_DARK);
         heroCard.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(27, 56, 88)),
+                BorderFactory.createLineBorder(new Color(188, 117, 148)),
                 BorderFactory.createEmptyBorder(22, 24, 22, 24)));
 
         JPanel textPanel = new JPanel();
@@ -152,15 +166,15 @@ public class MainFrame extends JFrame {
         companyLabel.setFont(new Font("SansSerif", Font.BOLD, 28));
 
         JLabel productLabel = new JLabel(AgencyService.PRODUCT_NAME);
-        productLabel.setForeground(new Color(216, 230, 245));
+        productLabel.setForeground(new Color(255, 229, 238));
         productLabel.setFont(new Font("SansSerif", Font.PLAIN, 18));
 
-        JLabel badge = createHeroBadge("Enterprise Swing Demo");
-        JLabel subtitle = new JLabel("Built for polished demos: branch inventory, reservations, invoicing, loyalty, and maintenance.");
-        subtitle.setForeground(new Color(220, 228, 236));
+        JLabel badge = createHeroBadge("Premium Rental Experience");
+        JLabel subtitle = new JLabel("Designed to impress: showroom-grade UI, branch inventory, reservations, invoicing, loyalty, and maintenance.");
+        subtitle.setForeground(new Color(255, 235, 241));
         subtitle.setFont(new Font("SansSerif", Font.PLAIN, 14));
 
-        heroInsightLabel.setForeground(new Color(255, 227, 165));
+        heroInsightLabel.setForeground(new Color(255, 226, 233));
         heroInsightLabel.setFont(new Font("SansSerif", Font.BOLD, 13));
 
         textPanel.add(badge);
@@ -185,12 +199,10 @@ public class MainFrame extends JFrame {
             refreshVehicleTable(agencyService.getVehicles().stream().toList());
             setStatus("Full inventory loaded.");
         });
-        JButton demoButton = createGhostButton("Load Demo Focus");
+        JButton demoButton = createGhostButton("Open Welcome");
         demoButton.addActionListener(e -> {
-            vehicleTypeBox.setSelectedItem("Luxury");
-            vehicleBranchBox.setSelectedIndex(Math.min(1, Math.max(0, vehicleBranchBox.getItemCount() - 1)));
-            searchVehicles();
-            setStatus("Luxury vehicle demo focus loaded.");
+            mainTabs.setSelectedIndex(0);
+            setStatus("Welcome showcase opened.");
         });
         quickActions.add(refreshButton);
         quickActions.add(inventoryButton);
@@ -212,14 +224,113 @@ public class MainFrame extends JFrame {
     }
 
     private JTabbedPane buildTabbedPane() {
-        JTabbedPane tabs = new JTabbedPane();
-        tabs.setFont(new Font("SansSerif", Font.BOLD, 13));
-        tabs.addTab("Dashboard", buildDashboardPanel());
-        tabs.addTab("Vehicles", buildVehiclePanel());
-        tabs.addTab("Customers", buildCustomerPanel());
-        tabs.addTab("Reservations", buildReservationPanel());
-        tabs.addTab("Maintenance", buildMaintenancePanel());
-        return tabs;
+        mainTabs.setFont(new Font("SansSerif", Font.BOLD, 13));
+        mainTabs.addTab("Welcome", buildWelcomePanel());
+        mainTabs.addTab("Dashboard", buildDashboardPanel());
+        mainTabs.addTab("Vehicles", buildVehiclePanel());
+        mainTabs.addTab("Customers", buildCustomerPanel());
+        mainTabs.addTab("Reservations", buildReservationPanel());
+        mainTabs.addTab("Maintenance", buildMaintenancePanel());
+        return mainTabs;
+    }
+
+    private JPanel buildWelcomePanel() {
+        JPanel panel = createPagePanel();
+
+        JPanel hero = new JPanel(new BorderLayout(18, 18)) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+                GradientPaint paint = new GradientPaint(0, 0, new Color(138, 58, 106), getWidth(), getHeight(), new Color(228, 121, 145));
+                g2.setPaint(paint);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 28, 28);
+                g2.dispose();
+            }
+        };
+        hero.setOpaque(false);
+        hero.setBorder(BorderFactory.createEmptyBorder(28, 28, 28, 28));
+
+        JPanel copy = new JPanel();
+        copy.setOpaque(false);
+        copy.setLayout(new BoxLayout(copy, BoxLayout.Y_AXIS));
+
+        JLabel badge = createHeroBadge("Welcome to KFISB");
+        JLabel title = new JLabel("Modern rental operations, presented with clarity.");
+        title.setFont(new Font("SansSerif", Font.BOLD, 30));
+        title.setForeground(Color.WHITE);
+
+        JLabel subtitle = new JLabel("KFISB DriveLounge brings branch inventory, reservations, invoicing, loyalty, and maintenance into one refined workspace.");
+        subtitle.setFont(new Font("SansSerif", Font.PLAIN, 15));
+        subtitle.setForeground(new Color(255, 237, 243));
+
+        JTextArea pitch = createWelcomeNarrativeArea();
+        pitch.setText("""
+KFISB DriveLounge is designed for teams that need a clean, dependable way to manage daily rental activity.
+
+What you can do here
+- Browse vehicles by branch and type
+- Register customers and track loyalty tiers
+- Create, update, and complete reservations
+- Generate invoices with insurance and mileage calculations
+- Manage maintenance scheduling for branch vehicles
+
+Use the tabs above to move through each part of the workflow.
+""");
+
+        copy.add(badge);
+        copy.add(Box.createVerticalStrut(14));
+        copy.add(title);
+        copy.add(Box.createVerticalStrut(10));
+        copy.add(subtitle);
+        copy.add(Box.createVerticalStrut(18));
+        copy.add(pitch);
+
+        JPanel showcase = new JPanel(new GridLayout(3, 1, 12, 12));
+        showcase.setOpaque(false);
+        showcase.add(createWelcomeHighlight("Vehicle Management", "Organized branch inventory", "View vehicle type, availability, color, pricing, and branch details in one place."));
+        showcase.add(createWelcomeHighlight("Reservation Flow", "Smooth rental processing", "Create reservations, complete pickup and return steps, and keep status changes easy to follow."));
+        showcase.add(createWelcomeHighlight("Business Control", "Invoices and service tracking", "Handle billing, loyalty discounts, maintenance records, and damage workflows from the same system."));
+
+        hero.add(copy, BorderLayout.CENTER);
+        hero.add(showcase, BorderLayout.EAST);
+
+        JPanel actions = new JPanel(new GridLayout(1, 3, 14, 14));
+        actions.setOpaque(false);
+
+        JButton catalogButton = createPrimaryCtaButton("Open Vehicle Catalog");
+        catalogButton.addActionListener(e -> {
+            refreshVehicleTable(agencyService.getVehicles().stream().toList());
+            openVehicleCatalogDialog("KFISB Vehicle Catalog");
+        });
+
+        JButton reserveButton = createGhostButton("Go to Reservations");
+        reserveButton.addActionListener(e -> {
+            mainTabs.setSelectedIndex(4);
+            setStatus("Reservations tab opened.");
+        });
+
+        JButton customerButton = createGhostButton("Go to Customers");
+        customerButton.addActionListener(e -> {
+            mainTabs.setSelectedIndex(3);
+            setStatus("Customers tab opened.");
+        });
+
+        actions.add(catalogButton);
+        actions.add(reserveButton);
+        actions.add(customerButton);
+
+        JPanel lower = new JPanel(new GridLayout(1, 3, 14, 14));
+        lower.setOpaque(false);
+        lower.add(createMetricCard("Branches", "Connected locations", createMetricDisplayLabel("3"), new Color(255, 234, 241)));
+        lower.add(createMetricCard("Vehicle Types", "Economy, SUV, Luxury, Van", createMetricDisplayLabel("4"), new Color(252, 239, 244)));
+        lower.add(createMetricCard("Core Modules", "Reservations, invoices, maintenance", createMetricDisplayLabel("5"), new Color(255, 232, 234)));
+
+        panel.add(hero, BorderLayout.NORTH);
+        panel.add(actions, BorderLayout.CENTER);
+        panel.add(lower, BorderLayout.SOUTH);
+        return panel;
     }
 
     private JPanel buildDashboardPanel() {
@@ -244,7 +355,7 @@ Presentation Tip
 """);
 
         JPanel left = createCardPanel("Operational Snapshot", "Executive-style summary for your presentation.");
-        left.add(createSectionTitle("System Summary"), BorderLayout.NORTH);
+        left.add(createSectionTitle("KFISB System Summary"), BorderLayout.NORTH);
         left.add(new JScrollPane(dashboardArea), BorderLayout.CENTER);
 
         JPanel right = createCardPanel("Presentation Guide", "Use this panel as your demo checklist.");
@@ -267,9 +378,8 @@ Presentation Tip
         top.setOpaque(false);
         top.add(buildVehicleSearchCard());
         top.add(buildVehicleHighlightsCard());
-
         panel.add(top, BorderLayout.NORTH);
-        panel.add(createTableSection("Vehicle Inventory", "Live fleet catalog across all branches.", vehicleTable), BorderLayout.CENTER);
+        panel.add(buildVehicleCatalogLaunchCard(), BorderLayout.CENTER);
         return panel;
     }
 
@@ -286,17 +396,27 @@ Presentation Tip
         form.add(createFieldLabel("End Date"));
         form.add(vehicleEndDateField);
 
-        JPanel buttonRow = new JPanel(new GridLayout(1, 2, 10, 10));
+        JPanel buttonRow = new JPanel(new GridLayout(1, 3, 10, 10));
         buttonRow.setOpaque(false);
         JButton searchButton = createAccentButton("Search Availability");
-        searchButton.addActionListener(e -> searchVehicles());
+        searchButton.addActionListener(e -> {
+            searchVehicles();
+            openVehicleCatalogDialog("Filtered Vehicle Results");
+        });
         JButton allButton = createGhostButton("Load Full Catalog");
         allButton.addActionListener(e -> {
             refreshVehicleTable(agencyService.getVehicles().stream().toList());
             setStatus("Full vehicle catalog displayed.");
+            openVehicleCatalogDialog("Full Vehicle Catalog");
+        });
+        JButton openCatalogButton = createGhostButton("Open Vehicle Catalog");
+        openCatalogButton.addActionListener(e -> {
+            refreshVehicleTable(agencyService.getVehicles().stream().toList());
+            openVehicleCatalogDialog("Full Vehicle Catalog");
         });
         buttonRow.add(searchButton);
         buttonRow.add(allButton);
+        buttonRow.add(openCatalogButton);
 
         form.add(buttonRow);
         JLabel note = new JLabel("This works well as a branch filtering demo.");
@@ -318,11 +438,49 @@ Fleet Highlights
 - Van: group and transfer scenarios
 
 Tip
-- Search for BR03 and Luxury to create a polished reservation demo.
+- Search for BR03 and SUV to spotlight the black Cupra Formentor.
 """);
 
         JPanel card = createCardPanel("Fleet Highlights", "Guide the viewer toward the most impressive flows.");
         card.add(new JScrollPane(insights), BorderLayout.CENTER);
+        return card;
+    }
+
+    private JPanel buildVehicleCatalogLaunchCard() {
+        JPanel card = createCardPanel("Vehicle Catalog Access", "Open the vehicle list in a dedicated polished window.");
+
+        JTextArea copy = createNarrativeArea();
+        copy.setText("""
+Catalog Tips
+
+- Use Open Vehicle Catalog for the full list.
+- Use Search Availability first if you want filtered results.
+- Every vehicle row shows its color beside brand and model.
+- Nissan Micra 1.0 Vision appears as a Green economy vehicle in BR01.
+""");
+
+        JPanel actions = new JPanel(new GridLayout(1, 2, 12, 12));
+        actions.setOpaque(false);
+        JButton openFullCatalog = createAccentButton("Open Full Catalog");
+        openFullCatalog.addActionListener(e -> {
+            refreshVehicleTable(agencyService.getVehicles().stream().toList());
+            openVehicleCatalogDialog("Full Vehicle Catalog");
+        });
+        JButton openFilteredCatalog = createGhostButton("Open Current Results");
+        openFilteredCatalog.addActionListener(e -> {
+            if (vehicleTableModel.getRowCount() == 0) {
+                refreshVehicleTable(agencyService.getVehicles().stream().toList());
+                openVehicleCatalogDialog("Full Vehicle Catalog");
+                setStatus("No filtered results were loaded, so the full catalog was opened.");
+            } else {
+                openVehicleCatalogDialog("Current Vehicle Results");
+            }
+        });
+        actions.add(openFullCatalog);
+        actions.add(openFilteredCatalog);
+
+        card.add(new JScrollPane(copy), BorderLayout.CENTER);
+        card.add(actions, BorderLayout.SOUTH);
         return card;
     }
 
@@ -406,6 +564,7 @@ Points are awarded automatically after invoice generation.
 
         JTabbedPane outputs = new JTabbedPane();
         outputs.setFont(new Font("SansSerif", Font.BOLD, 12));
+        outputs.addTab("Reservation IDs", buildReservationLookupSection());
         outputs.addTab("Reservations", createTableSection("Reservations", "Track current booking state transitions.", reservationTable));
         outputs.addTab("Invoices", createTableSection("Invoices", "Show billing calculations with discount visibility.", invoiceTable));
         outputs.addTab("Damage Reports", createTableSection("Damage Reports", "Optional return-stage assessments.", damageTable));
@@ -450,7 +609,20 @@ Points are awarded automatically after invoice generation.
         buttons.add(createButton);
         buttons.add(reloadButton);
         card.add(form, BorderLayout.CENTER);
-        card.add(buttons, BorderLayout.SOUTH);
+
+        JPanel south = new JPanel(new BorderLayout(8, 8));
+        south.setOpaque(false);
+        latestReservationLabel.setFont(new Font("SansSerif", Font.BOLD, 12));
+        latestReservationLabel.setForeground(BRAND_RED);
+        south.add(latestReservationLabel, BorderLayout.NORTH);
+        south.add(buttons, BorderLayout.SOUTH);
+
+        card.add(south, BorderLayout.SOUTH);
+        return card;
+    }
+
+    private JPanel buildReservationLookupSection() {
+        JPanel card = createTableSection("Reservation ID Lookup", "Use this list to find the exact ID you need for pickup or return.", reservationLookupTable);
         return card;
     }
 
@@ -555,7 +727,7 @@ Maintenance Demo Angle
         statusLabel.setFont(new Font("SansSerif", Font.PLAIN, 13));
         statusLabel.setForeground(TEXT_PRIMARY);
 
-        JLabel hintLabel = new JLabel("Best live demo path: search vehicle -> add customer -> reserve -> pick up -> return.");
+        JLabel hintLabel = new JLabel("KFISB demo path: welcome -> catalog -> customer -> reserve -> pick up -> return.");
         hintLabel.setForeground(TEXT_MUTED);
 
         footer.add(statusLabel, BorderLayout.WEST);
@@ -615,7 +787,10 @@ Maintenance Demo Angle
                     LocalDate.parse(reservationEndField.getText().trim()));
             reservationIdField.setText("");
             refreshAllViews();
-            showMessage("Reservation created successfully.");
+            latestReservationLabel.setText("Latest reservation ID: " + reservationId);
+            pickupReservationField.setText(reservationId);
+            returnReservationField.setText(reservationId);
+            showMessage("Reservation created successfully. Your reservation ID is: " + reservationId);
         } catch (Exception ex) {
             showError(ex);
         }
@@ -675,6 +850,7 @@ Maintenance Demo Angle
         invoiceCountLabel.setText(String.valueOf(agencyService.getInvoices().size()));
         heroInsightLabel.setText("Live rental operations overview across " + agencyService.getBranches().size() + " branches and "
                 + agencyService.getVehicles().size() + " vehicles.");
+        updateLatestReservationLabel();
 
         dashboardArea.setText(buildExecutiveSummary());
         refreshVehicleTable(agencyService.getVehicles().stream().toList());
@@ -715,6 +891,113 @@ Maintenance Demo Angle
         }
     }
 
+    private void openVehicleCatalogDialog(String title) {
+        JFrame catalogFrame = new JFrame(title + " - " + AgencyService.PRODUCT_NAME);
+        catalogFrame.setSize(1080, 520);
+        catalogFrame.setLocationRelativeTo(this);
+        catalogFrame.getContentPane().setBackground(PAGE_BACKGROUND);
+        catalogFrame.setLayout(new BorderLayout(12, 12));
+
+        JLabel header = new JLabel(title);
+        header.setFont(new Font("SansSerif", Font.BOLD, 20));
+        header.setForeground(TEXT_PRIMARY);
+
+        JLabel subHeader = new JLabel("Brand, model, color, branch, and pricing are displayed together for easier review.");
+        subHeader.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        subHeader.setForeground(TEXT_MUTED);
+
+        JPanel top = new JPanel();
+        top.setBackground(PAGE_BACKGROUND);
+        top.setBorder(BorderFactory.createEmptyBorder(16, 16, 0, 16));
+        top.setLayout(new BoxLayout(top, BoxLayout.Y_AXIS));
+        top.add(header);
+        top.add(Box.createVerticalStrut(4));
+        top.add(subHeader);
+        top.add(Box.createVerticalStrut(10));
+
+        JPanel searchPanel = new JPanel(new BorderLayout(8, 0));
+        searchPanel.setOpaque(false);
+        JLabel searchLabel = new JLabel("Search Catalog");
+        searchLabel.setFont(new Font("SansSerif", Font.BOLD, 12));
+        searchLabel.setForeground(TEXT_PRIMARY);
+
+        JTextField searchField = new JTextField();
+        searchField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 34));
+        searchField.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(226, 191, 208)),
+                BorderFactory.createEmptyBorder(8, 10, 8, 10)));
+        searchField.setToolTipText("Search by brand, model, color, branch, or type");
+        JButton clearButton = createGhostButton("Clear");
+        clearButton.addActionListener(e -> searchField.setText(""));
+        searchPanel.add(searchLabel, BorderLayout.WEST);
+        searchPanel.add(searchField, BorderLayout.CENTER);
+        searchPanel.add(clearButton, BorderLayout.EAST);
+
+        DefaultTableModel catalogModel = copyVehicleTableModel();
+        JTable catalogTable = createTable(catalogModel);
+        configureVehicleColorColumn(catalogTable);
+        TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(catalogModel);
+        catalogTable.setRowSorter(sorter);
+        searchField.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            private void applyFilter() {
+                String text = searchField.getText().trim();
+                if (text.isEmpty()) {
+                    sorter.setRowFilter(null);
+                } else {
+                    sorter.setRowFilter(javax.swing.RowFilter.regexFilter("(?i)" + java.util.regex.Pattern.quote(text)));
+                }
+            }
+
+            @Override
+            public void insertUpdate(javax.swing.event.DocumentEvent e) {
+                applyFilter();
+            }
+
+            @Override
+            public void removeUpdate(javax.swing.event.DocumentEvent e) {
+                applyFilter();
+            }
+
+            @Override
+            public void changedUpdate(javax.swing.event.DocumentEvent e) {
+                applyFilter();
+            }
+        });
+        top.add(searchPanel);
+        JScrollPane scrollPane = new JScrollPane(catalogTable);
+        scrollPane.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(222, 228, 235)),
+                BorderFactory.createEmptyBorder(4, 4, 4, 4)));
+
+        JPanel centerCard = new JPanel(new BorderLayout());
+        centerCard.setBackground(PANEL_BACKGROUND);
+        centerCard.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(219, 225, 233)),
+                BorderFactory.createEmptyBorder(12, 12, 12, 12)));
+        centerCard.add(scrollPane, BorderLayout.CENTER);
+
+        JPanel wrapper = new JPanel(new BorderLayout());
+        wrapper.setBackground(PAGE_BACKGROUND);
+        wrapper.setBorder(BorderFactory.createEmptyBorder(12, 16, 16, 16));
+        wrapper.add(centerCard, BorderLayout.CENTER);
+
+        catalogFrame.add(top, BorderLayout.NORTH);
+        catalogFrame.add(wrapper, BorderLayout.CENTER);
+        catalogFrame.setVisible(true);
+    }
+
+    private DefaultTableModel copyVehicleTableModel() {
+        DefaultTableModel model = createTableModel("ID", "Type", "Brand", "Model", "Color", "Year", "Branch", "Status", "Daily Rate");
+        for (int row = 0; row < vehicleTableModel.getRowCount(); row++) {
+            Object[] rowData = new Object[vehicleTableModel.getColumnCount()];
+            for (int column = 0; column < vehicleTableModel.getColumnCount(); column++) {
+                rowData[column] = vehicleTableModel.getValueAt(row, column);
+            }
+            model.addRow(rowData);
+        }
+        return model;
+    }
+
     private void refreshCustomerTable() {
         resetModel(customerTableModel);
         for (Customer customer : agencyService.getCustomers()) {
@@ -732,6 +1015,7 @@ Maintenance Demo Angle
 
     private void refreshReservationOutputs() {
         resetModel(reservationTableModel);
+        resetModel(reservationLookupTableModel);
         for (Reservation reservation : agencyService.getReservations()) {
             reservationTableModel.addRow(new Object[]{
                 reservation.getReservationId(),
@@ -741,6 +1025,12 @@ Maintenance Demo Angle
                 reservation.getReturnBranch().getBranchId(),
                 reservation.getStartDate(),
                 reservation.getEndDate(),
+                reservation.getStatus()
+            });
+            reservationLookupTableModel.addRow(new Object[]{
+                reservation.getReservationId(),
+                reservation.getCustomer().getFullName(),
+                reservation.getVehicle().getBrand() + " " + reservation.getVehicle().getModel(),
                 reservation.getStatus()
             });
         }
@@ -767,6 +1057,38 @@ Maintenance Demo Angle
                 "$" + formatMoney(report.getFee())
             });
         }
+    }
+
+    private void updateLatestReservationLabel() {
+        if (agencyService.getReservations().isEmpty()) {
+            latestReservationLabel.setText("Latest reservation ID: none yet");
+            return;
+        }
+        Reservation latestReservation = null;
+        for (Reservation reservation : agencyService.getReservations()) {
+            latestReservation = reservation;
+        }
+        if (latestReservation != null) {
+            latestReservationLabel.setText("Latest reservation ID: " + latestReservation.getReservationId());
+        }
+    }
+
+    private void wireReservationLookupTable() {
+        reservationLookupTable.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent event) {
+                if (event.getClickCount() == 2) {
+                    int row = reservationLookupTable.getSelectedRow();
+                    if (row >= 0) {
+                        String reservationId = String.valueOf(reservationLookupTable.getValueAt(row, 0));
+                        pickupReservationField.setText(reservationId);
+                        returnReservationField.setText(reservationId);
+                        latestReservationLabel.setText("Selected reservation ID: " + reservationId);
+                        setStatus("Reservation " + reservationId + " loaded into pickup and return fields.");
+                    }
+                }
+            }
+        });
     }
 
     private void refreshMaintenanceOutputs() {
@@ -922,7 +1244,7 @@ Presentation Angle
 
     private Border createCardBorder() {
         return BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(219, 225, 233)),
+                BorderFactory.createLineBorder(new Color(236, 209, 221)),
                 BorderFactory.createEmptyBorder(16, 16, 16, 16));
     }
 
@@ -956,7 +1278,14 @@ Presentation Angle
     private JLabel createMetricValueLabel() {
         JLabel label = new JLabel("0");
         label.setFont(new Font("SansSerif", Font.BOLD, 30));
-        label.setForeground(BRAND_MID);
+        label.setForeground(BRAND_RED);
+        return label;
+    }
+
+    private JLabel createMetricDisplayLabel(String text) {
+        JLabel label = new JLabel(text);
+        label.setFont(new Font("SansSerif", Font.BOLD, 26));
+        label.setForeground(BRAND_RED);
         return label;
     }
 
@@ -978,11 +1307,36 @@ Presentation Angle
         JLabel label = new JLabel(text);
         label.setOpaque(true);
         label.setHorizontalAlignment(SwingConstants.CENTER);
-        label.setBackground(ACCENT_GOLD);
-        label.setForeground(BRAND_DARK);
+        label.setBackground(new Color(255, 231, 238));
+        label.setForeground(BRAND_RED);
         label.setFont(new Font("SansSerif", Font.BOLD, 11));
         label.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
         return label;
+    }
+
+    private JPanel createWelcomeHighlight(String eyebrow, String title, String detail) {
+        JPanel card = new JPanel(new BorderLayout(6, 6));
+        card.setBackground(new Color(255, 255, 255, 38));
+        card.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(255, 255, 255, 65)),
+                BorderFactory.createEmptyBorder(14, 14, 14, 14)));
+
+        JLabel eyebrowLabel = new JLabel(eyebrow);
+        eyebrowLabel.setForeground(new Color(255, 233, 239));
+        eyebrowLabel.setFont(new Font("SansSerif", Font.BOLD, 11));
+
+        JLabel titleLabel = new JLabel(title);
+        titleLabel.setForeground(Color.WHITE);
+        titleLabel.setFont(new Font("SansSerif", Font.BOLD, 16));
+
+        JLabel detailLabel = new JLabel(detail);
+        detailLabel.setForeground(new Color(255, 237, 243));
+        detailLabel.setFont(new Font("SansSerif", Font.PLAIN, 12));
+
+        card.add(eyebrowLabel, BorderLayout.NORTH);
+        card.add(titleLabel, BorderLayout.CENTER);
+        card.add(detailLabel, BorderLayout.SOUTH);
+        return card;
     }
 
     private JTextArea createNarrativeArea() {
@@ -997,15 +1351,30 @@ Presentation Angle
         return area;
     }
 
+    private JTextArea createWelcomeNarrativeArea() {
+        JTextArea area = createNarrativeArea();
+        area.setOpaque(false);
+        area.setForeground(new Color(255, 239, 244));
+        area.setFont(new Font("SansSerif", Font.PLAIN, 13));
+        return area;
+    }
+
     private JButton createAccentButton(String text) {
         JButton button = new JButton(text);
-        styleButton(button, BRAND_MID, Color.WHITE, new Color(20, 56, 97));
+        styleButton(button, new Color(248, 220, 231), BRAND_RED, new Color(198, 103, 138));
+        return button;
+    }
+
+    private JButton createPrimaryCtaButton(String text) {
+        JButton button = new JButton(text);
+        styleButton(button, BRAND_RED, Color.WHITE, new Color(171, 59, 79));
+        button.setFont(new Font("SansSerif", Font.BOLD, 13));
         return button;
     }
 
     private JButton createGhostButton(String text) {
         JButton button = new JButton(text);
-        styleButton(button, new Color(246, 249, 253), TEXT_PRIMARY, new Color(211, 219, 228));
+        styleButton(button, new Color(255, 250, 252), new Color(120, 50, 84), new Color(223, 188, 205));
         return button;
     }
 
@@ -1014,6 +1383,8 @@ Presentation Angle
         button.setBackground(background);
         button.setForeground(foreground);
         button.setFont(new Font("SansSerif", Font.BOLD, 12));
+        button.setOpaque(true);
+        button.setContentAreaFilled(true);
         button.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(borderColor),
                 BorderFactory.createEmptyBorder(10, 14, 10, 14)));
@@ -1043,7 +1414,57 @@ Presentation Angle
         header.setBackground(new Color(233, 239, 247));
         header.setForeground(TEXT_PRIMARY);
         header.setReorderingAllowed(false);
+        if (findColumnIndex(model, "Color") >= 0) {
+            configureVehicleColorColumn(table);
+        }
         return table;
+    }
+
+    private void configureVehicleColorColumn(JTable table) {
+        int colorColumn = findColumnIndex((DefaultTableModel) table.getModel(), "Color");
+        if (colorColumn < 0) {
+            return;
+        }
+        table.getColumnModel().getColumn(colorColumn).setCellRenderer(new DefaultTableCellRenderer() {
+            @Override
+            public java.awt.Component getTableCellRendererComponent(JTable tbl, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                JLabel label = (JLabel) super.getTableCellRendererComponent(tbl, value, isSelected, hasFocus, row, column);
+                String colorName = value == null ? "" : value.toString();
+                label.setHorizontalAlignment(SwingConstants.CENTER);
+                if (isSelected) {
+                    label.setBackground(tbl.getSelectionBackground());
+                    label.setForeground(tbl.getSelectionForeground());
+                    label.setOpaque(true);
+                    return label;
+                }
+                label.setOpaque(true);
+                label.setBackground(mapColorChip(colorName));
+                label.setForeground(TEXT_PRIMARY);
+                return label;
+            }
+        });
+    }
+
+    private int findColumnIndex(DefaultTableModel model, String columnName) {
+        for (int i = 0; i < model.getColumnCount(); i++) {
+            if (columnName.equals(model.getColumnName(i))) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private Color mapColorChip(String colorName) {
+        return switch (colorName.toLowerCase()) {
+            case "green" -> new Color(204, 239, 208);
+            case "red" -> new Color(248, 215, 218);
+            case "blue", "midnight blue", "navy" -> new Color(211, 225, 245);
+            case "black", "obsidian black", "graphite" -> new Color(219, 222, 228);
+            case "white", "pearl white", "glacier white" -> new Color(246, 247, 249);
+            case "silver", "gray" -> new Color(231, 235, 239);
+            case "bronze", "champagne" -> new Color(242, 229, 208);
+            default -> new Color(236, 241, 245);
+        };
     }
 
     private JPanel createTableSection(String title, String subtitle, JTable table) {

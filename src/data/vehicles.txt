@@ -15,3 +15,4 @@ Van|VH14|35VAN514|Mercedes-Benz|Vito|Unspecified|2022|BR03|AVAILABLE
 Van|VH15|34VAN615|Volkswagen|Caravelle|Unspecified|2023|BR01|AVAILABLE
 Van|VH16|06VAN716|Peugeot|Traveller|Unspecified|2024|BR02|AVAILABLE
 Economy|VH17|34MIC117|Nissan|Micra 1.0 Vision|Green|2024|BR01|AVAILABLE
+SUV|VH18|35CUP418|Cupra|Formentor|Black|2024|BR03|AVAILABLE
