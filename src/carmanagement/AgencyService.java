@@ -80,6 +80,14 @@ public class AgencyService {
                 .collect(Collectors.toList());
     }
 
+    public List<Vehicle> searchVehiclesByCriteria(String branchId, String vehicleType) throws BranchNotFoundException {
+        requireBranch(branchId);
+        return vehicles.values().stream()
+                .filter(vehicle -> vehicle.getBranchId().equalsIgnoreCase(branchId))
+                .filter(vehicle -> vehicleType.equals("All") || vehicle.getVehicleType().equalsIgnoreCase(vehicleType))
+                .collect(Collectors.toList());
+    }
+
     public Customer registerCustomer(String customerId, String fullName, String phoneNumber, String licenseNumber) throws IOException {
         Customer customer = new Customer(customerId, fullName, phoneNumber, licenseNumber);
         return registerCustomer(customer);
@@ -321,6 +329,14 @@ public class AgencyService {
         vehicles.putIfAbsent("VH16", new VanVehicle("VH16", "06VAN716", "Peugeot", "Traveller", "Bronze", 2024, "BR02"));
         vehicles.putIfAbsent("VH17", new EconomyVehicle("VH17", "34MIC117", "Nissan", "Micra 1.0 Vision", "Green", 2024, "BR01"));
         vehicles.putIfAbsent("VH18", new SUVVehicle("VH18", "35CUP418", "Cupra", "Formentor", "Black", 2024, "BR03"));
+        vehicles.putIfAbsent("VH19", new EconomyVehicle("VH19", "34ECO819", "Skoda", "Fabia", "Ice Silver", 2024, "BR01"));
+        vehicles.putIfAbsent("VH20", new EconomyVehicle("VH20", "06ECO920", "Seat", "Ibiza", "White", 2023, "BR02"));
+        vehicles.putIfAbsent("VH21", new SUVVehicle("VH21", "35SUV021", "Toyota", "C-HR", "Ruby Red", 2024, "BR03"));
+        vehicles.putIfAbsent("VH22", new SUVVehicle("VH22", "34SUV122", "Hyundai", "Tucson", "Titan Gray", 2024, "BR01"));
+        vehicles.putIfAbsent("VH23", new LuxuryVehicle("VH23", "06LUX223", "Lexus", "ES 300h", "Pearl White", 2024, "BR02"));
+        vehicles.putIfAbsent("VH24", new LuxuryVehicle("VH24", "35LUX324", "Genesis", "G80", "Burgundy", 2024, "BR03"));
+        vehicles.putIfAbsent("VH25", new VanVehicle("VH25", "34VAN425", "Renault", "Trafic", "Silver", 2023, "BR01"));
+        vehicles.putIfAbsent("VH26", new VanVehicle("VH26", "06VAN526", "Opel", "Zafira Life", "Black", 2024, "BR02"));
     }
 
     private void loadBranches() throws IOException {

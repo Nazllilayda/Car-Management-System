@@ -95,6 +95,8 @@ public class MainFrame extends JFrame {
     private final JTextField maintenanceDateField = new JTextField(LocalDate.now().plusDays(7).toString());
     private final JTextField maintenanceDescriptionField = new JTextField("Routine inspection");
     private final JTabbedPane mainTabs = new JTabbedPane();
+    private final JTabbedPane reservationTabs = new JTabbedPane();
+    private final JTabbedPane workflowTabs = new JTabbedPane();
 
     private final DefaultTableModel vehicleTableModel = createTableModel("ID", "Type", "Brand", "Model", "Color", "Year", "Branch", "Status", "Daily Rate");
     private final DefaultTableModel customerTableModel = createTableModel("Customer ID", "Full Name", "Phone", "License", "Tier", "Points", "Discount");
@@ -194,15 +196,16 @@ public class MainFrame extends JFrame {
             refreshAllViews();
             setStatus("All panels refreshed.");
         });
-        JButton inventoryButton = createGhostButton("Show Inventory");
+        JButton inventoryButton = createGhostButton("Vehicle Catalog");
         inventoryButton.addActionListener(e -> {
             refreshVehicleTable(agencyService.getVehicles().stream().toList());
-            setStatus("Full inventory loaded.");
+            openVehicleCatalogDialog("Full Vehicle Catalog");
+            setStatus("Vehicle catalog opened.");
         });
-        JButton demoButton = createGhostButton("Open Welcome");
+        JButton demoButton = createGhostButton("Reservations");
         demoButton.addActionListener(e -> {
-            mainTabs.setSelectedIndex(0);
-            setStatus("Welcome showcase opened.");
+            mainTabs.setSelectedIndex(4);
+            setStatus("Reservations tab opened.");
         });
         quickActions.add(refreshButton);
         quickActions.add(inventoryButton);
@@ -305,13 +308,13 @@ Use the tabs above to move through each part of the workflow.
             openVehicleCatalogDialog("KFISB Vehicle Catalog");
         });
 
-        JButton reserveButton = createGhostButton("Go to Reservations");
+        JButton reserveButton = createGhostButton("Start Reservation");
         reserveButton.addActionListener(e -> {
             mainTabs.setSelectedIndex(4);
             setStatus("Reservations tab opened.");
         });
 
-        JButton customerButton = createGhostButton("Go to Customers");
+        JButton customerButton = createGhostButton("Open Customers");
         customerButton.addActionListener(e -> {
             mainTabs.setSelectedIndex(3);
             setStatus("Customers tab opened.");
@@ -338,27 +341,21 @@ Use the tabs above to move through each part of the workflow.
 
         dashboardArea.setText("");
         activityGuideArea.setText("""
-Demo Storyline
+System Flow
 
-1. Open Vehicles and filter by branch or type.
-2. Register a customer with an auto-generated ID.
-3. Create a reservation with insurance and branch selection.
-4. Pick up the vehicle to move the status into active rental.
-5. Return the vehicle with mileage and optional damage notes.
-6. Show the generated invoice and updated loyalty tier.
-7. Schedule maintenance for any vehicle after return.
-
-Presentation Tip
-- Start from the Dashboard
-- Jump to Vehicles for search
-- Finish in Reservations for the strongest visual payoff
+1. Review inventory by branch and type.
+2. Register or select a customer.
+3. Create a reservation.
+4. Pick up the reserved vehicle.
+5. Return the vehicle and generate the invoice.
+6. Schedule maintenance if needed.
 """);
 
-        JPanel left = createCardPanel("Operational Snapshot", "Executive-style summary for your presentation.");
+        JPanel left = createCardPanel("Operational Snapshot", "Current branch, vehicle, reservation, and invoice totals.");
         left.add(createSectionTitle("KFISB System Summary"), BorderLayout.NORTH);
         left.add(new JScrollPane(dashboardArea), BorderLayout.CENTER);
 
-        JPanel right = createCardPanel("Presentation Guide", "Use this panel as your demo checklist.");
+        JPanel right = createCardPanel("Workflow Guide", "Simple order for using the system.");
         right.add(createSectionTitle("Suggested Flow"), BorderLayout.NORTH);
         right.add(new JScrollPane(activityGuideArea), BorderLayout.CENTER);
 
@@ -384,7 +381,7 @@ Presentation Tip
     }
 
     private JPanel buildVehicleSearchCard() {
-        JPanel card = createCardPanel("Availability Search", "Filter by branch, vehicle type, and rental dates.");
+        JPanel card = createCardPanel("Vehicle Search", "Filter by branch, vehicle type, and rental dates.");
         JPanel form = new JPanel(new GridLayout(5, 2, 10, 10));
         form.setOpaque(false);
         form.add(createFieldLabel("Branch"));
@@ -396,30 +393,24 @@ Presentation Tip
         form.add(createFieldLabel("End Date"));
         form.add(vehicleEndDateField);
 
-        JPanel buttonRow = new JPanel(new GridLayout(1, 3, 10, 10));
+        JPanel buttonRow = new JPanel(new GridLayout(1, 2, 10, 10));
         buttonRow.setOpaque(false);
-        JButton searchButton = createAccentButton("Search Availability");
+        JButton searchButton = createAccentButton("Search Vehicles");
         searchButton.addActionListener(e -> {
             searchVehicles();
             openVehicleCatalogDialog("Filtered Vehicle Results");
-        });
-        JButton allButton = createGhostButton("Load Full Catalog");
-        allButton.addActionListener(e -> {
-            refreshVehicleTable(agencyService.getVehicles().stream().toList());
-            setStatus("Full vehicle catalog displayed.");
-            openVehicleCatalogDialog("Full Vehicle Catalog");
         });
         JButton openCatalogButton = createGhostButton("Open Vehicle Catalog");
         openCatalogButton.addActionListener(e -> {
             refreshVehicleTable(agencyService.getVehicles().stream().toList());
             openVehicleCatalogDialog("Full Vehicle Catalog");
+            setStatus("Vehicle catalog opened.");
         });
         buttonRow.add(searchButton);
-        buttonRow.add(allButton);
         buttonRow.add(openCatalogButton);
 
         form.add(buttonRow);
-        JLabel note = new JLabel("This works well as a branch filtering demo.");
+        JLabel note = new JLabel("Reserved vehicles also appear here with their current status.");
         note.setForeground(TEXT_MUTED);
         form.add(note);
 
@@ -430,24 +421,23 @@ Presentation Tip
     private JPanel buildVehicleHighlightsCard() {
         JTextArea insights = createNarrativeArea();
         insights.setText("""
-Fleet Highlights
+Fleet Overview
 
-- Economy: budget-friendly for everyday customers
-- SUV: family and comfort-focused rentals
-- Luxury: premium invoice showcase for demo impact
-- Van: group and transfer scenarios
+- Economy: practical daily rentals
+- SUV: comfort and family use
+- Luxury: premium reservations and invoices
+- Van: larger group transport
 
-Tip
-- Search for BR03 and SUV to spotlight the black Cupra Formentor.
+Catalog now includes 26 sample vehicles across 3 branches.
 """);
 
-        JPanel card = createCardPanel("Fleet Highlights", "Guide the viewer toward the most impressive flows.");
+        JPanel card = createCardPanel("Fleet Overview", "Quick explanation of the vehicle groups in the system.");
         card.add(new JScrollPane(insights), BorderLayout.CENTER);
         return card;
     }
 
     private JPanel buildVehicleCatalogLaunchCard() {
-        JPanel card = createCardPanel("Vehicle Catalog Access", "Open the vehicle list in a dedicated polished window.");
+        JPanel card = createCardPanel("Vehicle Catalog Access", "Open the full catalog or the latest filtered search results.");
 
         JTextArea copy = createNarrativeArea();
         copy.setText("""
@@ -456,7 +446,7 @@ Catalog Tips
 - Use Open Vehicle Catalog for the full list.
 - Use Search Availability first if you want filtered results.
 - Every vehicle row shows its color beside brand and model.
-- Nissan Micra 1.0 Vision appears as a Green economy vehicle in BR01.
+- The catalog now contains 26 vehicles.
 """);
 
         JPanel actions = new JPanel(new GridLayout(1, 2, 12, 12));
@@ -509,17 +499,11 @@ Catalog Tips
         form.add(createFieldLabel("License Number"));
         form.add(customerLicenseField);
 
-        JPanel buttons = new JPanel(new GridLayout(1, 2, 10, 10));
+        JPanel buttons = new JPanel(new GridLayout(1, 1, 10, 10));
         buttons.setOpaque(false);
         JButton addButton = createAccentButton("Add Customer");
         addButton.addActionListener(e -> addCustomer());
-        JButton reloadButton = createGhostButton("Reload");
-        reloadButton.addActionListener(e -> {
-            refreshAllViews();
-            setStatus("Customer records refreshed.");
-        });
         buttons.add(addButton);
-        buttons.add(reloadButton);
 
         form.add(buttons);
         JLabel note = new JLabel("IDs auto-fill, but you can still override them manually.");
@@ -557,20 +541,21 @@ Points are awarded automatically after invoice generation.
     private JPanel buildReservationPanel() {
         JPanel panel = createPagePanel();
 
-        JPanel top = new JPanel(new GridLayout(1, 2, 14, 14));
+        JSplitPane top = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, buildReservationFormCard(), buildWorkflowTabs());
+        top.setBorder(null);
         top.setOpaque(false);
-        top.add(buildReservationFormCard());
-        top.add(buildReservationWorkflowCard());
+        top.setResizeWeight(0.5);
 
-        JTabbedPane outputs = new JTabbedPane();
-        outputs.setFont(new Font("SansSerif", Font.BOLD, 12));
-        outputs.addTab("Reservation IDs", buildReservationLookupSection());
-        outputs.addTab("Reservations", createTableSection("Reservations", "Track current booking state transitions.", reservationTable));
-        outputs.addTab("Invoices", createTableSection("Invoices", "Show billing calculations with discount visibility.", invoiceTable));
-        outputs.addTab("Damage Reports", createTableSection("Damage Reports", "Optional return-stage assessments.", damageTable));
+        reservationTabs.removeAll();
+        reservationTabs.setFont(new Font("SansSerif", Font.BOLD, 12));
+        reservationTabs.addTab("Reservation IDs", buildReservationLookupSection());
+        reservationTabs.addTab("Reservations", createTableSection("Reservations", "Track current booking state transitions.", reservationTable));
+        reservationTabs.addTab("Invoices", createTableSection("Invoices", "Show billing calculations with discount visibility.", invoiceTable));
+        reservationTabs.addTab("Damage Reports", createTableSection("Damage Reports", "Optional return-stage assessments.", damageTable));
 
+        top.setPreferredSize(new Dimension(1200, 360));
         panel.add(top, BorderLayout.NORTH);
-        panel.add(outputs, BorderLayout.CENTER);
+        panel.add(reservationTabs, BorderLayout.CENTER);
         return panel;
     }
 
@@ -597,25 +582,23 @@ Points are awarded automatically after invoice generation.
         form.add(createFieldLabel("End Date"));
         form.add(reservationEndField);
 
-        JPanel buttons = new JPanel(new GridLayout(1, 2, 10, 10));
+        JPanel buttons = new JPanel(new GridLayout(1, 1, 10, 10));
         buttons.setOpaque(false);
         JButton createButton = createAccentButton("Create Reservation");
         createButton.addActionListener(e -> createReservation());
-        JButton reloadButton = createGhostButton("Reload Data");
-        reloadButton.addActionListener(e -> {
-            refreshAllViews();
-            setStatus("Reservation data refreshed.");
-        });
         buttons.add(createButton);
-        buttons.add(reloadButton);
-        card.add(form, BorderLayout.CENTER);
+
+        JPanel centerPanel = new JPanel(new BorderLayout(10, 10));
+        centerPanel.setOpaque(false);
+        centerPanel.add(buttons, BorderLayout.NORTH);
+        centerPanel.add(form, BorderLayout.CENTER);
+        card.add(centerPanel, BorderLayout.CENTER);
 
         JPanel south = new JPanel(new BorderLayout(8, 8));
         south.setOpaque(false);
         latestReservationLabel.setFont(new Font("SansSerif", Font.BOLD, 12));
         latestReservationLabel.setForeground(BRAND_RED);
         south.add(latestReservationLabel, BorderLayout.NORTH);
-        south.add(buttons, BorderLayout.SOUTH);
 
         card.add(south, BorderLayout.SOUTH);
         return card;
@@ -626,11 +609,19 @@ Points are awarded automatically after invoice generation.
         return card;
     }
 
-    private JPanel buildReservationWorkflowCard() {
-        JPanel card = createCardPanel("Pickup and Return Workflow", "Demonstrates state changes, billing, and damage handling.");
-        JPanel form = new JPanel(new GridLayout(6, 2, 10, 10));
+    private JTabbedPane buildWorkflowTabs() {
+        workflowTabs.removeAll();
+        workflowTabs.setFont(new Font("SansSerif", Font.BOLD, 12));
+        workflowTabs.addTab("Pickup", buildPickupCard());
+        workflowTabs.addTab("Return", buildReturnCard());
+        return workflowTabs;
+    }
+
+    private JPanel buildPickupCard() {
+        JPanel card = createCardPanel("Pickup Workflow", "Use the reservation ID to mark the vehicle as collected.");
+        JPanel form = new JPanel(new GridLayout(2, 2, 10, 10));
         form.setOpaque(false);
-        form.add(createFieldLabel("Pickup Reservation ID"));
+        form.add(createFieldLabel("Reservation ID"));
         form.add(pickupReservationField);
         JButton pickupButton = createAccentButton("Pick Up Vehicle");
         pickupButton.addActionListener(e -> pickUpVehicle());
@@ -638,7 +629,15 @@ Points are awarded automatically after invoice generation.
         JLabel pickupHint = new JLabel("Status changes from RESERVED to PICKED_UP");
         pickupHint.setForeground(TEXT_MUTED);
         form.add(pickupHint);
-        form.add(createFieldLabel("Return Reservation ID"));
+        card.add(form, BorderLayout.CENTER);
+        return card;
+    }
+
+    private JPanel buildReturnCard() {
+        JPanel card = createCardPanel("Return Workflow", "Use the same reservation ID to complete the rental and generate the invoice.");
+        JPanel form = new JPanel(new GridLayout(4, 2, 10, 10));
+        form.setOpaque(false);
+        form.add(createFieldLabel("Reservation ID"));
         form.add(returnReservationField);
         form.add(createFieldLabel("Mileage Driven"));
         form.add(mileageField);
@@ -650,7 +649,6 @@ Points are awarded automatically after invoice generation.
         JLabel returnHint = new JLabel("Creates invoice, updates loyalty points, and stores damage fees.");
         returnHint.setForeground(TEXT_MUTED);
         form.add(returnHint);
-
         card.add(form, BorderLayout.CENTER);
         return card;
     }
@@ -684,17 +682,11 @@ Points are awarded automatically after invoice generation.
         form.add(createFieldLabel("Description"));
         form.add(maintenanceDescriptionField);
 
-        JPanel buttons = new JPanel(new GridLayout(1, 2, 10, 10));
+        JPanel buttons = new JPanel(new GridLayout(1, 1, 10, 10));
         buttons.setOpaque(false);
         JButton scheduleButton = createAccentButton("Schedule");
         scheduleButton.addActionListener(e -> scheduleMaintenance());
-        JButton reloadButton = createGhostButton("Reload");
-        reloadButton.addActionListener(e -> {
-            refreshAllViews();
-            setStatus("Maintenance records refreshed.");
-        });
         buttons.add(scheduleButton);
-        buttons.add(reloadButton);
         form.add(buttons);
         JLabel note = new JLabel("Vehicles in maintenance cannot be reserved.");
         note.setForeground(TEXT_MUTED);
@@ -737,13 +729,11 @@ Maintenance Demo Angle
 
     private void searchVehicles() {
         try {
-            List<Vehicle> vehicles = agencyService.searchAvailableVehicles(
+            List<Vehicle> vehicles = agencyService.searchVehiclesByCriteria(
                     selectedId(vehicleBranchBox),
-                    String.valueOf(vehicleTypeBox.getSelectedItem()),
-                    LocalDate.parse(vehicleStartDateField.getText().trim()),
-                    LocalDate.parse(vehicleEndDateField.getText().trim()));
+                    String.valueOf(vehicleTypeBox.getSelectedItem()));
             refreshVehicleTable(vehicles);
-            setStatus("Vehicle availability search completed: " + vehicles.size() + " result(s).");
+            setStatus("Vehicle search completed: " + vehicles.size() + " result(s).");
         } catch (Exception ex) {
             showError(ex);
         }
@@ -788,8 +778,9 @@ Maintenance Demo Angle
             reservationIdField.setText("");
             refreshAllViews();
             latestReservationLabel.setText("Latest reservation ID: " + reservationId);
-            pickupReservationField.setText(reservationId);
-            returnReservationField.setText(reservationId);
+            setWorkflowReservationId(reservationId);
+            workflowTabs.setSelectedIndex(0);
+            reservationTabs.setSelectedIndex(0);
             showMessage("Reservation created successfully. Your reservation ID is: " + reservationId);
         } catch (Exception ex) {
             showError(ex);
@@ -798,13 +789,14 @@ Maintenance Demo Angle
 
     private void pickUpVehicle() {
         try {
-            validateText(pickupReservationField.getText(), "Pickup reservation ID");
-            String reservationId = pickupReservationField.getText().trim();
+            validateText(pickupReservationField.getText(), "Reservation ID");
+            String reservationId = normalizeReservationId(pickupReservationField.getText().trim());
+            setWorkflowReservationId(reservationId);
             agencyService.pickUpVehicle(reservationId);
-            pickupReservationField.setText("");
             refreshAllViews();
             showMessage("Vehicle picked up successfully.");
             setStatus("Reservation " + reservationId + " is now active.");
+            workflowTabs.setSelectedIndex(1);
         } catch (Exception ex) {
             showError(ex);
         }
@@ -812,14 +804,15 @@ Maintenance Demo Angle
 
     private void returnVehicle() {
         try {
-            validateText(returnReservationField.getText(), "Return reservation ID");
+            validateText(returnReservationField.getText(), "Reservation ID");
             int mileage = Integer.parseInt(mileageField.getText().trim());
             if (mileage < 0) {
                 throw new IllegalArgumentException("Mileage cannot be negative.");
             }
-            String reservationId = returnReservationField.getText().trim();
+            String reservationId = normalizeReservationId(returnReservationField.getText().trim());
+            setWorkflowReservationId(reservationId);
             Invoice invoice = agencyService.returnVehicle(reservationId, mileage, damageField.getText().trim());
-            returnReservationField.setText("");
+            setWorkflowReservationId("");
             damageField.setText("");
             refreshAllViews();
             showMessage("Vehicle returned. Invoice total: $" + formatMoney(invoice.getTotalAmount()));
@@ -1081,14 +1074,18 @@ Maintenance Demo Angle
                     int row = reservationLookupTable.getSelectedRow();
                     if (row >= 0) {
                         String reservationId = String.valueOf(reservationLookupTable.getValueAt(row, 0));
-                        pickupReservationField.setText(reservationId);
-                        returnReservationField.setText(reservationId);
+                        setWorkflowReservationId(reservationId);
                         latestReservationLabel.setText("Selected reservation ID: " + reservationId);
-                        setStatus("Reservation " + reservationId + " loaded into pickup and return fields.");
+                        setStatus("Reservation " + reservationId + " loaded into pickup and return.");
                     }
                 }
             }
         });
+    }
+
+    private void setWorkflowReservationId(String reservationId) {
+        pickupReservationField.setText(reservationId);
+        returnReservationField.setText(reservationId);
     }
 
     private void refreshMaintenanceOutputs() {
@@ -1417,6 +1414,9 @@ Presentation Angle
         if (findColumnIndex(model, "Color") >= 0) {
             configureVehicleColorColumn(table);
         }
+        if (findColumnIndex(model, "Status") >= 0) {
+            configureStatusColumn(table);
+        }
         return table;
     }
 
@@ -1445,6 +1445,31 @@ Presentation Angle
         });
     }
 
+    private void configureStatusColumn(JTable table) {
+        int statusColumn = findColumnIndex((DefaultTableModel) table.getModel(), "Status");
+        if (statusColumn < 0) {
+            return;
+        }
+        table.getColumnModel().getColumn(statusColumn).setCellRenderer(new DefaultTableCellRenderer() {
+            @Override
+            public java.awt.Component getTableCellRendererComponent(JTable tbl, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                JLabel label = (JLabel) super.getTableCellRendererComponent(tbl, value, isSelected, hasFocus, row, column);
+                String statusName = value == null ? "" : value.toString();
+                label.setHorizontalAlignment(SwingConstants.CENTER);
+                if (isSelected) {
+                    label.setBackground(tbl.getSelectionBackground());
+                    label.setForeground(tbl.getSelectionForeground());
+                    label.setOpaque(true);
+                    return label;
+                }
+                label.setOpaque(true);
+                label.setBackground(mapStatusChip(statusName));
+                label.setForeground(TEXT_PRIMARY);
+                return label;
+            }
+        });
+    }
+
     private int findColumnIndex(DefaultTableModel model, String columnName) {
         for (int i = 0; i < model.getColumnCount(); i++) {
             if (columnName.equals(model.getColumnName(i))) {
@@ -1463,6 +1488,16 @@ Presentation Angle
             case "white", "pearl white", "glacier white" -> new Color(246, 247, 249);
             case "silver", "gray" -> new Color(231, 235, 239);
             case "bronze", "champagne" -> new Color(242, 229, 208);
+            default -> new Color(236, 241, 245);
+        };
+    }
+
+    private Color mapStatusChip(String statusName) {
+        return switch (statusName.toUpperCase()) {
+            case "AVAILABLE" -> new Color(225, 243, 228);
+            case "RESERVED" -> new Color(255, 225, 228);
+            case "RENTED" -> new Color(255, 239, 212);
+            case "MAINTENANCE" -> new Color(233, 226, 245);
             default -> new Color(236, 241, 245);
         };
     }
@@ -1491,6 +1526,17 @@ Presentation Angle
 
     private String formatMoney(double value) {
         return String.format("%.2f", value);
+    }
+
+    private String normalizeReservationId(String input) {
+        String value = input.trim().toUpperCase();
+        if (value.matches("\\d+")) {
+            return "RES" + String.format("%03d", Integer.parseInt(value));
+        }
+        if (value.startsWith("RES") && value.substring(3).matches("\\d+")) {
+            return "RES" + String.format("%03d", Integer.parseInt(value.substring(3)));
+        }
+        return value;
     }
 
     private void validateText(String value, String fieldName) {
